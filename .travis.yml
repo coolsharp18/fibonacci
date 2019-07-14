@@ -1,0 +1,32 @@
+sudo: required
+services:
+    - docker
+    
+before_install:
+    - docker build -t coolsharp18/fibonacci -f ./client/Dockerfile.dev . 
+    
+script:
+    - docker run -e CI=true coolsharp18/fibonacci npm run test -- --coverage
+
+after_success:    
+    - docker build -t coolsharp18/multi-client ./client
+    - docker build -t coolsharp18/multi-nginx ./nginx
+    - docker build -t coolsharp18/multi-server ./server
+    - docker build -t coolsharp18/multi-worker ./worker
+    - echo "$DOCKER_PASSWORD" | dokcer login -u "$DOCKER_ID" --password-stdin
+    - docker push coolsharp18/multi-client
+    - docker push coolsharp18/multi-nginx
+    - docker push coolsharp18/multi-server
+    - docker push coolsharp18/multi-worker
+#deploy:
+#    provider: elasticbeanstalk
+#    region: "us-east-1"
+#    app: "docker-react"
+#    env: "DockerReact-env"
+#    bucket_name: "elasticbeanstalk-us-east-1-851989266948"
+#    bucket_path: "docker-react"
+#    on:
+#        branch: master
+#    access_key_id: "$AWS_ACCESS_KEY"
+#    secret_access_key:
+#        secure: "$AWS_SECRET_KEY"
